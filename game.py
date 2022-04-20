@@ -89,20 +89,6 @@ class GerenciadorDeElementos:
         self.chunk_renders = [image_generator.ChunkRender(chunk) for chunk in self.chunks.values()]
 
         self.init_chunks()
-        self.render_chunks()
-
-    def connect_renders(self):
-        return
-        renders = list(filter(lambda r: (not r.connected), self.chunk_renders))
-        chunks = list(filter(lambda ch: ch.render is None, self.chunks.values()))
-        for chunk, render in zip(chunks, renders):
-            render.connect(chunk)
-
-    def render_chunks(self):
-        return
-        for render in self.chunk_renders:
-            if not render.rendered:
-                render.render()
 
     def init_chunks(self):
 
@@ -182,8 +168,6 @@ class GerenciadorDeElementos:
                 self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['2, 1'].loc[0] + 1, self.chunks['2, 1'].loc[1]])
 
-            self.connect_renders()
-            self.render_chunks()
             self.init_chunks()
 
         if self.personagem.rect.centerx < (self.chunks['1, 1'].loc[0]) * Chunk.dimensions[0]:
@@ -216,8 +200,6 @@ class GerenciadorDeElementos:
                 self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['2, 1'].loc[0] - 1, self.chunks['2, 1'].loc[1]])
 
-            self.connect_renders()
-            self.render_chunks()
             self.init_chunks()
 
         # avançar verticalmente
@@ -252,8 +234,6 @@ class GerenciadorDeElementos:
                 self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] - 1])
 
-            self.connect_renders()
-            self.render_chunks()
             self.init_chunks()
 
         if self.personagem.rect.centery > (self.chunks['1, 1'].loc[1] + 1) * Chunk.dimensions[0]:
@@ -287,8 +267,6 @@ class GerenciadorDeElementos:
                 self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] + 1])
 
-            self.connect_renders()
-            self.render_chunks()
             self.init_chunks()
 
     def update_platforms(self):
