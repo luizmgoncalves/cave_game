@@ -9,8 +9,20 @@ class EnvironmentGenerator:
     def __init__(self):
         self.consultor = consulta_ao_banco.ConsultorDB()
         self.have_changes = False
+        self.all_chunks = {}
+        result = self.consultor.get_all()
+        
+        for chunk in result:  # Already exists
+            chunk_index, _, around_chunks = chunk
+            around_chunks = [int(x) if x != '|' else None for x in around_chunks.split()]
+            blocks = self.consultor.search_chunk(chunk_index)
+            self.all_chunks[chunk_index] = Chunk([int(x) for x in chunk[1].split(',')], chunk_index, around_chunks, blocks=self.raw_to_processed_block_transformer(blocks))
+
 
     def big_last_save(self):
+        for chunk in self.all_chunks.values():
+            self.delete_chunk(chunk)
+        
         self.consultor.bigger_commit()
 
     def its_safe_to_commit(self):
@@ -22,6 +34,20 @@ class EnvironmentGenerator:
         if chunk.around_chunks_changes:
             new_around = chunk.get_around_chunks()
             self.consultor.update_chunk_around(chunk.index, new_around)
+            self.have_changes = True
+
+        if chunk.was_added:
+            # b == (index, type, chunk)
+            pos_p = f'{chunk.loc[0]},{chunk.loc[1]}'
+            pre_saved_blocks = list()
+
+            for li, line in enumerate(chunk.blocks):
+                for ci, column in enumerate(line):
+                    for layer, type in enumerate(column):
+                        pre_saved_blocks.append((li*Chunk.chunk_length*2+ci*2+layer, int(type), pos_p))
+
+            self.consultor.write_chunk(pos_p, pre_saved_blocks, chunk.get_around_chunks())
+
             self.have_changes = True
 
         if chunk.block_changes:
@@ -45,33 +71,17 @@ class EnvironmentGenerator:
             pos_p = f'{pos[0]},{pos[1]}'
             result = self.consultor.get_chunk_by_pos(pos_p)
             if result:  # Already exists
-                chunk_index, _, around_chunks = result[0]
-                around_chunks = [int(x) if x != '|' else None for x in around_chunks.split()]
-                blocks = self.consultor.search_chunk(chunk_index)
-                chunk = Chunk(pos, chunk_index, around_chunks, blocks=self.raw_to_processed_block_transformer(blocks))
+                chunk_index, _, _ = result[0]
+                chunk = self.all_chunks[chunk_index]
 
             else:  # Not exists yet
-                # b == (index, type, chunk)
-                chunk = Chunk(pos, self.consultor.last_chunk_index, [None for i in range(4)])
+                chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index, [None for i in range(4)])
+                
                 self.consultor.increment_last_chunk_index()
-
-                pre_saved_blocks = list()
-
-                for li, line in enumerate(chunk.blocks):
-                    for ci, column in enumerate(line):
-                        for layer, type in enumerate(column):
-                            pre_saved_blocks.append((li*Chunk.chunk_length*2+ci*2+layer, int(type), pos_p))
-
-                self.consultor.write_chunk(pos_p, pre_saved_blocks, chunk.get_around_chunks())
-
-                self.have_changes = True
+                
 
         else:
-            chunk_index, pos, around_chunks = self.consultor.get_chunk_by_id(chunk_id)
-            pos = [int(x) for x in pos.split(',')]
-            around_chunks = [int(x) if x != '|' else None for x in around_chunks.split()]
-            blocks = self.consultor.search_chunk(chunk_index)
-            chunk = Chunk(pos, chunk_index, around_chunks, blocks=self.raw_to_processed_block_transformer(blocks))
+            chunk = self.all_chunks[chunk_id]
 
         return chunk
 
@@ -161,21 +171,21 @@ class Chunk:
         self.index = index
         self.blocks = blocks
         self.block_changes = list()
-        self.render: image_generator.ChunkRender = None
 
         self.around_chunks = around_chunks
         self.around_chunks_changes = False
+        self.was_added = False
 
         if self.blocks is None:
             self.blocks = EnvironmentGenerator.environment_generator(self.loc)
+            self.was_added = True
 
         self.len_platforms = 0
 
         self.platforms = self.array_abstraction()
 
-    def disconnect_render(self):
-        self.render.disconnect()
-        self.render = None
+    def __repr__(self):
+        return f'<Chunk object id: {self.index}, loc: {self.loc}>'
 
     def get_around_chunks(self):
         return ' '.join([str(chunk_id) if chunk_id is not None else '|' for chunk_id in self.around_chunks])
@@ -184,7 +194,6 @@ class Chunk:
         pos = platform.get_pos()
         self.blocks[pos[0]][pos[1]][pos[2]] = 0
         self.platforms.remove(platform)
-        self.render.remove_block(platform)
         self.block_changes.append(self.RemoveChange(platform.get_global_indexer()))
 
     def set_around_chunks(self, chunk_id: int, pos: int):

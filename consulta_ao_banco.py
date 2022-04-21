@@ -66,6 +66,10 @@ class ConsultorDB:
 
         self.cursor.execute(f"SELECT indexer, ptype, chunk FROM blocks WHERE global_indexer > {(chunk_index-1)*world_generator.Chunk.chunk_length*world_generator.Chunk.chunk_length*2} and global_indexer <= {chunk_index*40*40*2}")
         return self.cursor.fetchall()
+    
+    def get_all(self):
+        self.cursor.execute(f"SELECT * FROM chunks")
+        return self.cursor.fetchall()
 
     def clear_database(self):
         self.clear_blocks_table()

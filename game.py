@@ -125,19 +125,10 @@ class GerenciadorDeElementos:
         self.chunks['2, 2'].set_around_chunks(self.chunks['1, 2'].index, 0)
         self.chunks['2, 2'].set_around_chunks(self.chunks['2, 1'].index, 3)
 
-    def deletar_blocos_correntes(self):
-        self.save_chunk_verifier(self.chunks.values())
-
-    def save_chunk_verifier(self, chunks: list) -> None:
-        for chunk in chunks:
-            #chunk.disconnect_render()
-            self.environment_generator.delete_chunk(chunk)
-
     def monitor_de_lotes(self):
         # avançar horizontalmente
 
         if self.personagem.rect.centerx > (self.chunks['1, 1'].loc[0] + 1) * Chunk.dimensions[0]:
-            self.save_chunk_verifier([self.chunks['0, 0'], self.chunks['1, 0'], self.chunks['2, 0']])
 
             self.chunks['0, 0'], self.chunks['1, 0'], self.chunks['2, 0'] = self.chunks['0, 1'], self.chunks[
                 '1, 1'], self.chunks['2, 1']
@@ -171,7 +162,6 @@ class GerenciadorDeElementos:
             self.init_chunks()
 
         if self.personagem.rect.centerx < (self.chunks['1, 1'].loc[0]) * Chunk.dimensions[0]:
-            self.save_chunk_verifier([self.chunks['0, 2'], self.chunks['1, 2'], self.chunks['2, 2']])
             self.chunks['0, 2'], self.chunks['1, 2'], self.chunks['2, 2'] = self.chunks['0, 1'], self.chunks[
                 '1, 1'], self.chunks['2, 1']
             self.chunks['0, 1'], self.chunks['1, 1'], self.chunks['2, 1'] = self.chunks['0, 0'], self.chunks[
@@ -204,7 +194,6 @@ class GerenciadorDeElementos:
 
         # avançar verticalmente
         if self.personagem.rect.centery < (self.chunks['1, 1'].loc[1]) * Chunk.dimensions[0]:
-            self.save_chunk_verifier([self.chunks['2, 0'], self.chunks['2, 1'], self.chunks['2, 2']])
             self.chunks['2, 0'], self.chunks['2, 1'], self.chunks['2, 2'] = self.chunks['1, 0'], self.chunks[
                 '1, 1'], self.chunks['1, 2']
             self.chunks['1, 0'], self.chunks['1, 1'], self.chunks['1, 2'] = self.chunks['0, 0'], self.chunks[
@@ -237,7 +226,6 @@ class GerenciadorDeElementos:
             self.init_chunks()
 
         if self.personagem.rect.centery > (self.chunks['1, 1'].loc[1] + 1) * Chunk.dimensions[0]:
-            self.save_chunk_verifier([self.chunks['0, 0'], self.chunks['0, 1'], self.chunks['0, 2']])
             self.chunks['0, 0'], self.chunks['0, 1'], self.chunks['0, 2'] = self.chunks['1, 0'], self.chunks[
                 '1, 1'], self.chunks['1, 2']
             self.chunks['1, 0'], self.chunks['1, 1'], self.chunks['1, 2'] = self.chunks['2, 0'], self.chunks[
@@ -294,9 +282,6 @@ class GerenciadorDeElementos:
             self.loop_waiters.remove(waiter)
 
         to_destroy_waiters.clear()
-
-        #for render in self.chunk_renders:
-        #    self.janela.blit(render.surface, (render.pos[0] + self.pos_de_apresentacao[0], render.pos[1] + self.pos_de_apresentacao[1]))
 
 
     def atualizar_monitor(self):
@@ -357,7 +342,6 @@ class GerenciadorDeElementos:
     def monitor_de_movimentos(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                self.deletar_blocos_correntes()
                 self.QUIT = True
                 self.environment_generator.big_last_save()
                 if DEBUG:
@@ -388,7 +372,7 @@ class GerenciadorDeElementos:
 
 
 if __name__ == '__main__':
-    DEBUG = True
+    DEBUG = False
 
     pygame.display.init()
 
