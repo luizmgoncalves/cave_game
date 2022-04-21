@@ -88,7 +88,6 @@ class GerenciadorDeElementos:
         self.init_chunks()
 
     def init_chunks(self):
-
         self.chunks['0, 0'].set_around_chunks(self.chunks['0, 1'].index, 1)
         self.chunks['0, 0'].set_around_chunks(self.chunks['1, 0'].index, 2)
 
