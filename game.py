@@ -3,7 +3,6 @@ import sys
 import os
 from world_generator import *
 from waiters import *
-import image_generator
 import debugger
 from fisics import PixelPerSecond, PixelPerSecondSquared, Friction
 
@@ -85,8 +84,6 @@ class GerenciadorDeElementos:
                        '2, 0': self.environment_generator.buscar_blocos([-1, 1]),
                        '2, 1': self.environment_generator.buscar_blocos([0, 1]),
                        '2, 2': self.environment_generator.buscar_blocos([1, 1])}
-
-        self.chunk_renders = [image_generator.ChunkRender(chunk) for chunk in self.chunks.values()]
 
         self.init_chunks()
 

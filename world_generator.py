@@ -1,6 +1,5 @@
 import consulta_ao_banco
 import pygame
-import image_generator
 import debugger
 import numpy as np
 
