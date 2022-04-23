@@ -60,7 +60,7 @@ class MouseClickWaiter(MainPlatformLoopWaiter):
     def loop_function(self, platform):
         from math import hypot
         if (platform.collidepoint(self.pos[0] - self.pos_de_apresentacao[0], self.pos[1] - self.pos_de_apresentacao[1]) and
-                (hypot(platform.x - self.personagem_x, platform.y - self.personagem_y) < 90)):
+                (hypot(platform.x - self.personagem_x, platform.y - self.personagem_y) < 200)):
             self.stop_waiter()
             self.platform = platform
 

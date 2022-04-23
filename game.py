@@ -63,7 +63,7 @@ class Personagem:
 class GerenciadorDeElementos:
     def __init__(self, janela):
         self.janela = janela
-        self.fps = 60
+        self.fps = 30
         self.personagem = Personagem(frame_rate=self.fps)
         self.platform_meta_data = PlatformData()
         self.loop_waiters = [MoveCharacterXWaiter(self.personagem), MoveCharacterYWaiter(self.personagem)]
@@ -254,6 +254,7 @@ class GerenciadorDeElementos:
             self.init_chunks()
 
     def update_platforms(self):
+        global HEIGHT, WIDTH
         self.monitor_de_lotes()
 
         for waiter in self.loop_waiters:
@@ -264,7 +265,7 @@ class GerenciadorDeElementos:
                 for waiter in self.loop_waiters:
                     waiter.run(platform)
 
-                if ((platform.x - self.personagem.rect.centerx)**2+(platform.y - self.personagem.rect.centery)**2)**(1/2) < 700:
+                if WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-50 and -50<(platform.y + self.pos_de_apresentacao[1])<HEIGHT:
                     self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
 
         to_destroy_waiters = []
@@ -356,6 +357,14 @@ class GerenciadorDeElementos:
                 if event.key == pygame.K_UP or event.key == pygame.K_w:
                     self.personagem.up = True
 
+            if event.type == pygame.VIDEORESIZE:
+                global imagem, HEIGHT, WIDTH
+                imagem = pygame.transform.scale(pygame.image.load('game_images/background_forest.png'),
+                                    (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
+                infoObject = pygame.display.Info()
+                WIDTH = int(infoObject.current_w)
+                HEIGHT = int(infoObject.current_h)
+            
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     self.personagem.right = False
@@ -372,12 +381,13 @@ if __name__ == '__main__':
 
     pygame.display.init()
 
+    screen = pygame.display.set_mode((800, 800), pygame.RESIZABLE)
+    pygame.display.set_caption('Cube\'s Odyssey')
+
     infoObject = pygame.display.Info()
     print(infoObject)
-    w = int(infoObject.current_w)
-    h = int(infoObject.current_h)
-    screen = pygame.display.set_mode((w, h), pygame.RESIZABLE)
-    pygame.display.set_caption('Cube\'s Odyssey')
+    WIDTH = int(infoObject.current_w)
+    HEIGHT = int(infoObject.current_h)
 
     imagem = pygame.transform.scale(pygame.image.load('game_images/background_forest.png'),
                                     (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
@@ -388,7 +398,7 @@ if __name__ == '__main__':
     counter = 0
 
     # loop #
-    while True:
+    while 1:
         screen.blit(imagem, (0, 0))
 
         gerenciador.atualizar()
