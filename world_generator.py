@@ -9,6 +9,7 @@ class EnvironmentGenerator:
         self.consultor = consulta_ao_banco.ConsultorDB()
         self.have_changes = False
         self.all_chunks = {}
+        self.all_chunks_pos = {}
         result = self.consultor.get_all()
         
         for chunk in result:  # Already exists
@@ -16,6 +17,7 @@ class EnvironmentGenerator:
             around_chunks = [int(x) if x != '|' else None for x in around_chunks.split()]
             blocks = self.consultor.search_chunk(chunk_index)
             self.all_chunks[chunk_index] = Chunk([int(x) for x in chunk[1].split(',')], chunk_index, around_chunks, blocks=self.raw_to_processed_block_transformer(blocks))
+            self.all_chunks_pos[chunk[1]] = chunk_index
 
 
     def big_last_save(self):
@@ -64,20 +66,31 @@ class EnvironmentGenerator:
             self.have_changes = True
 
             chunk.block_changes.clear()
+    
+    def chunk_exists(self, pos) -> bool:
+        try:
+            res = self.all_chunks_pos[pos]
+            return res
+        except KeyError:
+            return None
 
     def buscar_blocos(self, pos, chunk_id=None, by_pos=True):
         if by_pos:
             pos_p = f'{pos[0]},{pos[1]}'
-            result = self.consultor.get_chunk_by_pos(pos_p)
-            if result:  # Already exists
-                chunk_index, _, _ = result[0]
-                chunk = self.all_chunks[chunk_index]
+            try: 
+                result = self.all_chunks_pos[pos_p]
+                # Already exists
+                chunk = self.all_chunks[result]
+            except KeyError: # Not exists yet
+                around_chunks = [None, None, None, None]
+                around_chunks[0] = self.chunk_exists(f'{pos[0]},{pos[1]-1}')
+                around_chunks[1] = self.chunk_exists(f'{pos[0]+1},{pos[1]}')
+                around_chunks[2] = self.chunk_exists(f'{pos[0]},{pos[1]+1}')
+                around_chunks[3] = self.chunk_exists(f'{pos[0]-1},{pos[1]}')
 
-            else:  # Not exists yet
-                chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index, [None for i in range(4)])
-                
+                chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index, around_chunks)
+                self.all_chunks_pos[pos_p] = self.consultor.last_chunk_index
                 self.consultor.increment_last_chunk_index()
-                
 
         else:
             chunk = self.all_chunks[chunk_id]
@@ -114,7 +127,7 @@ class EnvironmentGenerator:
         elif pos_absolute[1] > 0:
             for line in range(0, Chunk.chunk_length):
                 for column in range(0, Chunk.chunk_length):
-                    ambiente[line][column] = [3, 0]
+                    ambiente[line][column] = [3, 3]
             return ambiente
         else:
             return ambiente
@@ -132,7 +145,7 @@ class EnvironmentGenerator:
                     tipo = 1
                 else:
                     tipo = 2
-                block_array[line][column] = [tipo, 0]
+                block_array[line][column] = [tipo, tipo]
             first_line = False
 
         trees = [random.randrange(0, Chunk.chunk_length, random.randint(2, 6)) for x in range(0, 3)]
@@ -193,6 +206,16 @@ class Chunk:
         pos = platform.get_pos()
         self.blocks[pos[0]][pos[1]][pos[2]] = 0
         self.platforms.remove(platform)
+        if pos[2] == 0 and self.blocks[pos[0]][pos[1]][pos[2]+1]:
+            kwargs = {'pos': (self.loc[0] * Chunk.dimensions[0] + pos[1] * Platform.dimensions[0],
+                                      self.loc[1] * Chunk.dimensions[1] + pos[0] * Platform.dimensions[1]),
+                              'ptype': self.blocks[pos[0]][pos[1]][pos[2]+1],
+                              'layer': 1,
+                              'owner': self,
+                              'index': pos[0] * self.chunk_length * 2 + pos[1] * 2 + 1}  # [li, ci, layer]}
+
+            self.platforms.append(Platform(**kwargs))
+
         self.block_changes.append(self.RemoveChange(platform.get_global_indexer()))
 
     def set_around_chunks(self, chunk_id: int, pos: int):
@@ -209,7 +232,7 @@ class Chunk:
             self.around_chunks_changes = True
         else:
             if self.around_chunks[pos] != chunk_id:
-                raise Exception(f"O around do chunk {self.index}, na posição {pos}, já estava setado, antigo:{self.around_chunks[pos]}, novo: {chunk_id}")
+                raise Exception(f"O around do chunk {self.index}, na posição {pos}, já estava setado, antigo:{self.around_chunks[pos]}, novo: {chunk_id}\nsround_chunks={self.around_chunks}")
 
     def array_abstraction(self):
         platforms = list()
@@ -217,6 +240,8 @@ class Chunk:
             for ci, column in enumerate(line):
                 for layer, ptype in enumerate(column):
                     if ptype == 0:  # Só cria plataformas quando o espaço não é vazio
+                        continue
+                    if layer==1 and column[layer-1]:
                         continue
 
                     kwargs = {'pos': (self.loc[0] * Chunk.dimensions[0] + ci * Platform.dimensions[0],
@@ -237,6 +262,7 @@ class Chunk:
                 for layer, ptype in enumerate(column):
                     if ptype == 0:  # Só retorna plataformas quando o espaço não é vazio
                         continue
+                    
 
                     yield {'pos': (self.loc[0] * Chunk.dimensions[0] + ci * Platform.dimensions[0],
                                    self.loc[1] * Chunk.dimensions[1] + li * Platform.dimensions[1]),
@@ -289,3 +315,16 @@ class PlatformData:
                                                        tuple(Platform.dimensions)).convert(),
                                 pygame.transform.scale(pygame.image.load('game_images/wood_texture.jpg'),
                                                        tuple(Platform.dimensions)).convert()]
+
+        self.PLATFORM_IMAGES_UN = [None]
+
+        for image in self.PLATFORM_IMAGES[1:]:
+            darken_percent = 0.50
+            dark = pygame.Surface(image.get_size()).convert_alpha()
+            dark.fill((0, 0, 0, darken_percent*255))
+            darker = image.copy()
+            darker.blit(dark, (0, 0))
+            darker.convert()
+            self.PLATFORM_IMAGES_UN.append(darker)
+
+        

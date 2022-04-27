@@ -19,6 +19,7 @@ class ConsultorDB:
 
     def increment_last_chunk_index(self):
         self.last_chunk_index += 1
+        print("Last index = ", self.last_chunk_index)
 
     def increment_last_block_index(self):
         self.last_block_index += 1
@@ -34,9 +35,14 @@ class ConsultorDB:
 
         self.last_block_index = resposta[0][0]
         self.last_chunk_index = resposta[0][1]
+        print(resposta)
+        print("Reading index = ", self.last_chunk_index)
 
     def write_last_index(self):
+        self.cursor.execute(f"DELETE FROM last_index WHERE TRUE")
         self.cursor.execute(f"INSERT INTO last_index values ('{self.last_block_index}', '{self.last_chunk_index}')")
+        print("Writing last index = ", self.last_chunk_index)
+
 
     def update_chunk_around(self, chunk_id, new_around):
         self.cursor.execute(f"UPDATE chunks SET around_chunks = '{new_around}' WHERE indexer= '{chunk_id}'")

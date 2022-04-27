@@ -10,7 +10,7 @@ pygame.init()
 
 
 class Personagem:
-    dimensions = [50, 50]
+    dimensions = [30, 80]
 
     def __init__(self, frame_rate=60):
         self.rect = pygame.Rect((200, 0), self.dimensions)
@@ -28,31 +28,39 @@ class Personagem:
         self.down = False
 
         self.imagens = [
-            [pygame.transform.scale(pygame.image.load(f'game_images/d{x}.png'), tuple(self.dimensions)).convert() for x in
-             range(1, 6)],
-            [pygame.transform.scale(pygame.image.load(f'game_images/e{x}.png'), tuple(self.dimensions)).convert() for x in
-             range(1, 6)],
-            pygame.transform.scale(pygame.image.load('game_images/p1.png'), tuple(self.dimensions)).convert(),
-            pygame.transform.scale(pygame.image.load('game_images/pe1.png'), tuple(self.dimensions)).convert(),
-            pygame.transform.scale(pygame.image.load('game_images/pa.png'), tuple(self.dimensions)).convert()]
+            [pygame.transform.scale(pygame.image.load(f'game_images/previous/d{x}.png'), tuple(self.dimensions)).convert() for x in
+             range(1, 7)],
+            [pygame.transform.flip(pygame.transform.scale(pygame.image.load(f'game_images/previous/d{x}.png'), tuple(self.dimensions)), True, False).convert() for x in
+             range(1, 7)],
+            pygame.transform.scale(pygame.image.load('game_images/previous/d3.png'), tuple(self.dimensions)).convert(),
+            pygame.transform.flip(pygame.transform.scale(pygame.image.load('game_images/previous/d3.png'), tuple(self.dimensions)), True, False).convert(),
+            pygame.transform.scale(pygame.image.load('game_images/previous/d1.png'), tuple(self.dimensions)).convert()]
+
+        for imagem in self.imagens:
+            if type(imagem) == list:
+                for sprite in imagem:
+                    sprite.set_colorkey((255, 255, 255))
+            else:
+                imagem.set_colorkey((255, 255, 255))
 
         self.imagem = self.imagens[4]
 
     def atualizar_frame(self):
-        if self.contador >= 30:
+        if self.contador >= 12:
             self.contador = 0
+        
 
-        if self.left and self.pulou:
-            self.imagem = self.imagens[3]
-
-        elif self.right and self.pulou:
-            self.imagem = self.imagens[2]
+        if self.falling:
+            if self.velocidade[0].get() < 0:
+                self.imagem = self.imagens[3]
+            else:
+                self.imagem = self.imagens[2]
 
         elif self.left:
-            self.imagem = self.imagens[1][(self.contador // 6)]
+            self.imagem = self.imagens[1][(self.contador // 2)]
 
         elif self.right:
-            self.imagem = self.imagens[0][(self.contador // 6)]
+            self.imagem = self.imagens[0][(self.contador // 2)]
 
         else:
             self.imagem = self.imagens[4]
@@ -266,7 +274,10 @@ class GerenciadorDeElementos:
                     waiter.run(platform)
 
                 if WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-50 and -50<(platform.y + self.pos_de_apresentacao[1])<HEIGHT:
-                    self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
+                    if platform.layer==0:
+                        self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
+                    else:
+                        self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES_UN[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
 
         to_destroy_waiters = []
 
@@ -359,7 +370,7 @@ class GerenciadorDeElementos:
 
             if event.type == pygame.VIDEORESIZE:
                 global imagem, HEIGHT, WIDTH
-                imagem = pygame.transform.scale(pygame.image.load('game_images/background_forest.png'),
+                imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
                                     (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
                 infoObject = pygame.display.Info()
                 WIDTH = int(infoObject.current_w)
@@ -381,7 +392,7 @@ if __name__ == '__main__':
 
     pygame.display.init()
 
-    screen = pygame.display.set_mode((800, 800), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((800, 500), pygame.RESIZABLE)
     pygame.display.set_caption('Cube\'s Odyssey')
 
     infoObject = pygame.display.Info()
@@ -389,7 +400,7 @@ if __name__ == '__main__':
     WIDTH = int(infoObject.current_w)
     HEIGHT = int(infoObject.current_h)
 
-    imagem = pygame.transform.scale(pygame.image.load('game_images/background_forest.png'),
+    imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
                                     (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
 
     gerenciador = GerenciadorDeElementos(screen)
