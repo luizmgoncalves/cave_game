@@ -62,16 +62,18 @@ class MouseClickWaiter(MainPlatformLoopWaiter):
         if (platform.collidepoint(self.pos[0] - self.pos_de_apresentacao[0], self.pos[1] - self.pos_de_apresentacao[1]) and
                 (hypot(platform.x - self.personagem_x, platform.y - self.personagem_y) < 200)):
             self.stop_waiter()
+            self.elements_manager.pre_render_changes = True
             self.platform = platform
 
 
 class MoveCharacterXWaiter(MainPlatformLoopWaiter):
-    def __init__(self, character):
+    def __init__(self, character, owner):
         super().__init__()
         self.one_time = False
         self.character = character
         self.virtual_rect = None
         self.collide = False
+        self.owner = owner
 
     def init_loop(self):
         super().init_loop()
@@ -82,26 +84,31 @@ class MoveCharacterXWaiter(MainPlatformLoopWaiter):
     def loop_function(self, platform):
         if self.virtual_rect.colliderect(platform) and platform.colidable:
             if self.character.velocidade[0].value > 0:
-                self.character.rect.right = platform.left
+                self.virtual_rect.right = platform.left
                 self.character.velocidade[0].set(0)
             if self.character.velocidade[0].value < 0:
-                self.character.rect.left = platform.right
+                self.virtual_rect.left = platform.right
                 self.character.velocidade[0].set(0)
 
             self.collide = True
+            self.stop_waiter()
+            
 
     def finalise_function(self, *args, **kwargs):
-        if not self.collide:
-            self.character.rect.x = self.virtual_rect.x
+        if self.character.rect.x != self.virtual_rect.x:
+            self.owner.pre_render_changes = True
+        
+        self.character.rect.x = self.virtual_rect.x
 
 
 class MoveCharacterYWaiter(MainPlatformLoopWaiter):
-    def __init__(self, character):
+    def __init__(self, character, owner):
         super().__init__()
         self.one_time = False
         self.character = character
         self.virtual_rect = None
         self.collide = False
+        self.owner = owner
 
     def init_loop(self):
         super().init_loop()
@@ -116,7 +123,7 @@ class MoveCharacterYWaiter(MainPlatformLoopWaiter):
     def loop_function(self, platform):
         if self.virtual_rect.colliderect(platform) and platform.colidable:
             if self.character.velocidade[1].value > 0:
-                self.character.rect.bottom = platform.top
+                self.virtual_rect.bottom = platform.top
                 if self.character.pulou:
                     self.character.pulou = False
                 self.character.velocidade[1].set(0)
@@ -124,11 +131,14 @@ class MoveCharacterYWaiter(MainPlatformLoopWaiter):
                 self.character.falling = False
 
             if self.character.velocidade[1].value < 0:
-                self.character.rect.top = platform.bottom
+                self.virtual_rect.top = platform.bottom
                 self.character.velocidade[1].set(0)
 
             self.collide = True
+            self.stop_waiter()
 
     def finalise_function(self, *args, **kwargs):
-        if not self.collide:
-            self.character.rect.y = self.virtual_rect.y
+        if self.character.rect.y != self.virtual_rect.y:
+            self.owner.pre_render_changes = True
+
+        self.character.rect.y = self.virtual_rect.y

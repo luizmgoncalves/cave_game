@@ -1,6 +1,5 @@
 import pygame
 import sys
-import os
 from world_generator import *
 from waiters import *
 import debugger
@@ -12,7 +11,7 @@ pygame.init()
 class Personagem:
     dimensions = [30, 80]
 
-    def __init__(self, frame_rate=60):
+    def __init__(self, frame_rate, owner):
         self.rect = pygame.Rect((200, 0), self.dimensions)
         self.color = pygame.Color(0, 100, 0, a=0)
         self.velocidade = [PixelPerSecond(0, 500, frame_rate), PixelPerSecond(0, 2000, frame_rate)]
@@ -20,6 +19,7 @@ class Personagem:
         self.aceleracao_horizontal = PixelPerSecondSquared(3000, frame_rate)
         self.atrito = Friction(2000, frame_rate)
         self.contador = 0
+        self.owner = owner
         self.falling = False
         self.pulou = False
         self.right = False
@@ -49,24 +49,33 @@ class Personagem:
 
     def atualizar_frame(self):
         if self.contador >= 12:
-            self.contador = 0
-        
+            self.contador = 0        
 
         if self.falling:
             if self.velocidade[0].get() < 0:
+                if self.imagem != self.imagens[3]:
+                    self.owner.pre_render_changes = True
                 self.imagem = self.imagens[3]
             else:
+                if self.imagem != self.imagens[2]:
+                    self.owner.pre_render_changes = True
                 self.imagem = self.imagens[2]
 
         elif self.left:
+            if self.imagem != self.imagens[1][(self.contador // 2)]:
+                    self.owner.pre_render_changes = True
             self.imagem = self.imagens[1][(self.contador // 2)]
 
         elif self.right:
+            if self.imagem != self.imagens[0][(self.contador // 2)]:
+                    self.owner.pre_render_changes = True
             self.imagem = self.imagens[0][(self.contador // 2)]
 
         else:
+            if self.imagem != self.imagens[4]:
+                    self.owner.pre_render_changes = True
             self.imagem = self.imagens[4]
-
+        
         self.contador += 1
 
 
@@ -74,10 +83,13 @@ class GerenciadorDeElementos:
     def __init__(self, janela):
         self.janela = janela
         self.fps = 60
-        self.personagem = Personagem(frame_rate=self.fps)
+        self.personagem = Personagem(frame_rate=self.fps, owner=self)
         self.platform_meta_data = PlatformData()
-        self.loop_waiters = [MoveCharacterXWaiter(self.personagem), MoveCharacterYWaiter(self.personagem)]
+        self.loop_waiters = [MoveCharacterXWaiter(self.personagem, self), MoveCharacterYWaiter(self.personagem, self)]
         self.QUIT = False
+        self.pre_render_changes = False
+        self.pos_render_changes = False
+        self.rendered = False
         self.contador = 0
         self.pos_de_apresentacao = [0, 0]
         self.environment_generator = EnvironmentGenerator()
@@ -94,11 +106,6 @@ class GerenciadorDeElementos:
                        '2, 0': self.environment_generator.buscar_blocos([-1, 1]),
                        '2, 1': self.environment_generator.buscar_blocos([0, 1]),
                        '2, 2': self.environment_generator.buscar_blocos([1, 1])}
-
-        self.init_chunks()
-
-    def init_chunks(self):
-        pass
 
     def monitor_de_lotes(self):
         # avançar horizontalmente
@@ -119,7 +126,6 @@ class GerenciadorDeElementos:
             self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['2, 1'].loc[0] + 1, self.chunks['2, 1'].loc[1]])
 
-            self.init_chunks()
 
         if self.personagem.rect.centerx < (self.chunks['1, 1'].loc[0]) * Chunk.dimensions[0]:
             self.chunks['0, 2'], self.chunks['1, 2'], self.chunks['2, 2'] = self.chunks['0, 1'], self.chunks[
@@ -136,7 +142,6 @@ class GerenciadorDeElementos:
             self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['2, 1'].loc[0] - 1, self.chunks['2, 1'].loc[1]])
 
-            self.init_chunks()
 
         # avançar verticalmente
         if self.personagem.rect.centery < (self.chunks['1, 1'].loc[1]) * Chunk.dimensions[0]:
@@ -154,7 +159,6 @@ class GerenciadorDeElementos:
             self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] - 1])
 
-            self.init_chunks()
 
         if self.personagem.rect.centery > (self.chunks['1, 1'].loc[1] + 1) * Chunk.dimensions[0]:
             self.chunks['0, 0'], self.chunks['0, 1'], self.chunks['0, 2'] = self.chunks['1, 0'], self.chunks[
@@ -171,14 +175,16 @@ class GerenciadorDeElementos:
             self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] + 1])
 
-            self.init_chunks()
 
     def update_platforms(self):
         global HEIGHT, WIDTH
         self.monitor_de_lotes()
 
+
         for waiter in self.loop_waiters:
             waiter.init_loop()
+        
+        self.pre_render_changes = False
 
         for chunk in self.chunks.values():
             for platform in chunk.platforms:
@@ -186,10 +192,11 @@ class GerenciadorDeElementos:
                     waiter.run(platform)
 
                 if WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-50 and -50<(platform.y + self.pos_de_apresentacao[1])<HEIGHT:
-                    if platform.layer==0:
-                        self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
-                    else:
-                        self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES_UN[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
+                    if self.pos_render_changes:
+                        if platform.layer==0:
+                            self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
+                        else:
+                            self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES_UN[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
 
         to_destroy_waiters = []
 
@@ -203,6 +210,11 @@ class GerenciadorDeElementos:
 
         to_destroy_waiters.clear()
 
+        self.gerenciador_de_movimento_vertical()
+        self.gerenciador_de_movimento_horizontal()
+        self.desenhar_personagem()
+
+
 
     def atualizar_monitor(self):
         self.pos_de_apresentacao[0] = pygame.display.Info().current_w // 2 - self.personagem.rect.center[0]
@@ -210,8 +222,13 @@ class GerenciadorDeElementos:
 
     def desenhar_personagem(self):
         self.personagem.atualizar_frame()
-        self.janela.blit(self.personagem.imagem, (
-            self.personagem.rect.x + self.pos_de_apresentacao[0], self.personagem.rect.y + self.pos_de_apresentacao[1]))
+        if self.pos_render_changes:
+            self.janela.blit(self.personagem.imagem, (
+                self.personagem.rect.x + self.pos_de_apresentacao[0], self.personagem.rect.y + self.pos_de_apresentacao[1]))
+
+            self.rendered = True
+        
+
 
     def gerenciador_de_movimento_vertical(self):
         if self.personagem.up and not self.personagem.pulou and not self.personagem.falling:
@@ -250,11 +267,9 @@ class GerenciadorDeElementos:
         self.atualizar_monitor()
 
         self.monitor_de_movimentos()
-
-        self.gerenciador_de_movimento_vertical()
-        self.gerenciador_de_movimento_horizontal()
-        self.desenhar_personagem()
-        #self.mover_personagem()
+        
+        if self.pre_render_changes != self.pos_render_changes:
+            self.pos_render_changes = self.pre_render_changes
 
     def verificador_clicar_bloco(self, pos):
         self.loop_waiters.append(MouseClickWaiter(pos, self.pos_de_apresentacao, self.personagem.rect.x, self.personagem.rect.y, self))
@@ -267,10 +282,10 @@ class GerenciadorDeElementos:
                 if DEBUG:
                     self.environment_generator.consultor.clear_database()
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.verificador_clicar_bloco(event.pos)
 
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     self.personagem.right = True
                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:
@@ -280,15 +295,7 @@ class GerenciadorDeElementos:
                 if event.key == pygame.K_UP or event.key == pygame.K_w:
                     self.personagem.up = True
 
-            if event.type == pygame.VIDEORESIZE:
-                global imagem, HEIGHT, WIDTH
-                imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
-                                    (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
-                infoObject = pygame.display.Info()
-                WIDTH = int(infoObject.current_w)
-                HEIGHT = int(infoObject.current_h)
-            
-            if event.type == pygame.KEYUP:
+            elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     self.personagem.right = False
                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:
@@ -297,6 +304,15 @@ class GerenciadorDeElementos:
                     self.personagem.down = False
                 if event.key == pygame.K_UP or event.key == pygame.K_w:
                     self.personagem.up = False
+            
+            elif event.type == pygame.VIDEORESIZE:
+                global imagem, HEIGHT, WIDTH
+                imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
+                                    (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
+                infoObject = pygame.display.Info()
+                WIDTH = int(infoObject.current_w)
+                HEIGHT = int(infoObject.current_h)
+                self.pre_render_changes = True
 
 
 if __name__ == '__main__':
@@ -324,14 +340,18 @@ if __name__ == '__main__':
 
     # loop #
     while 1:
-        screen.blit(imagem, (0, 0))
+        if gerenciador.pos_render_changes:
+            screen.blit(imagem, (0, 0))
 
         gerenciador.atualizar()
 
         if gerenciador.QUIT:
             break
 
-        pygame.display.update()
+        if gerenciador.rendered:
+            pygame.display.update()
+            gerenciador.rendered = False
+
         mainClock.tick(gerenciador.fps)
         if counter % 100 == 0:
             print(mainClock.get_fps())
