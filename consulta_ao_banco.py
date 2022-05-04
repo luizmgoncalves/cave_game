@@ -43,10 +43,6 @@ class ConsultorDB:
         self.cursor.execute(f"INSERT INTO last_index values ('{self.last_block_index}', '{self.last_chunk_index}')")
         print("Writing last index = ", self.last_chunk_index)
 
-
-    def update_chunk_around(self, chunk_id, new_around):
-        self.cursor.execute(f"UPDATE chunks SET around_chunks = '{new_around}' WHERE indexer= '{chunk_id}'")
-
     def update_blocks(self, block_list): # block list = ((new_type, block_id), ...)
         self.cursor.executemany(f"UPDATE blocks SET ptype = ? WHERE global_indexer = ?", block_list)
 
@@ -59,8 +55,8 @@ class ConsultorDB:
         self.cursor.execute(f"SELECT * FROM chunks WHERE indexer='{chunk_id}'")
         return self.cursor.fetchall()[0]
 
-    def write_chunk(self, pos, block_list, around_chunks):
-        self.cursor.execute(f"INSERT INTO chunks (chunk, around_chunks) values ('{pos}', '{around_chunks}')")
+    def write_chunk(self, pos, block_list):
+        self.cursor.execute(f"INSERT INTO chunks (chunk) values ('{pos}')")
 
         self.cursor.executemany(f"INSERT INTO blocks (indexer, ptype, chunk) values (?, ?, ?)", block_list)
 

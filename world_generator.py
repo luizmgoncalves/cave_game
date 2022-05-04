@@ -13,10 +13,9 @@ class EnvironmentGenerator:
         result = self.consultor.get_all()
         
         for chunk in result:  # Already exists
-            chunk_index, _, around_chunks = chunk
-            around_chunks = [int(x) if x != '|' else None for x in around_chunks.split()]
+            chunk_index, _, _ = chunk
             blocks = self.consultor.search_chunk(chunk_index)
-            self.all_chunks[chunk_index] = Chunk([int(x) for x in chunk[1].split(',')], chunk_index, around_chunks, blocks=self.raw_to_processed_block_transformer(blocks))
+            self.all_chunks[chunk_index] = Chunk([int(x) for x in chunk[1].split(',')], chunk_index, blocks=self.raw_to_processed_block_transformer(blocks))
             self.all_chunks_pos[chunk[1]] = chunk_index
 
 
@@ -32,11 +31,6 @@ class EnvironmentGenerator:
             self.have_changes = False
 
     def delete_chunk(self, chunk):
-        if chunk.around_chunks_changes:
-            new_around = chunk.get_around_chunks()
-            self.consultor.update_chunk_around(chunk.index, new_around)
-            self.have_changes = True
-
         if chunk.was_added:
             # b == (index, type, chunk)
             pos_p = f'{chunk.loc[0]},{chunk.loc[1]}'
@@ -47,7 +41,7 @@ class EnvironmentGenerator:
                     for layer, type in enumerate(column):
                         pre_saved_blocks.append((li*Chunk.chunk_length*2+ci*2+layer, int(type), pos_p))
 
-            self.consultor.write_chunk(pos_p, pre_saved_blocks, chunk.get_around_chunks())
+            self.consultor.write_chunk(pos_p, pre_saved_blocks)
 
             self.have_changes = True
 
@@ -74,26 +68,16 @@ class EnvironmentGenerator:
         except KeyError:
             return None
 
-    def buscar_blocos(self, pos, chunk_id=None, by_pos=True):
-        if by_pos:
-            pos_p = f'{pos[0]},{pos[1]}'
-            try: 
-                result = self.all_chunks_pos[pos_p]
-                # Already exists
-                chunk = self.all_chunks[result]
-            except KeyError: # Not exists yet
-                around_chunks = [None, None, None, None]
-                around_chunks[0] = self.chunk_exists(f'{pos[0]},{pos[1]-1}')
-                around_chunks[1] = self.chunk_exists(f'{pos[0]+1},{pos[1]}')
-                around_chunks[2] = self.chunk_exists(f'{pos[0]},{pos[1]+1}')
-                around_chunks[3] = self.chunk_exists(f'{pos[0]-1},{pos[1]}')
-
-                chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index, around_chunks)
-                self.all_chunks_pos[pos_p] = self.consultor.last_chunk_index
-                self.consultor.increment_last_chunk_index()
-
-        else:
-            chunk = self.all_chunks[chunk_id]
+    def buscar_blocos(self, pos):
+        pos_p = f'{pos[0]},{pos[1]}'
+        try: 
+            result = self.all_chunks_pos[pos_p]
+            # Already exists
+            chunk = self.all_chunks[result]
+        except KeyError: # Not exists yet
+            chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index)
+            self.all_chunks_pos[pos_p] = self.consultor.last_chunk_index
+            self.consultor.increment_last_chunk_index()
 
         return chunk
 
@@ -178,14 +162,12 @@ class Chunk:
     chunk_length = 40
     dimensions = (platform_dimensions[0] * chunk_length, platform_dimensions[1] * chunk_length)
 
-    def __init__(self, loc, index, around_chunks, blocks=None):
+    def __init__(self, loc, index, blocks=None):
         self.loc = loc
         self.index = index
         self.blocks = blocks
         self.block_changes = list()
 
-        self.around_chunks = around_chunks
-        self.around_chunks_changes = False
         self.was_added = False
 
         if self.blocks is None:
@@ -198,9 +180,6 @@ class Chunk:
 
     def __repr__(self):
         return f'<Chunk object id: {self.index}, loc: {self.loc}>'
-
-    def get_around_chunks(self):
-        return ' '.join([str(chunk_id) if chunk_id is not None else '|' for chunk_id in self.around_chunks])
 
     def remove_block(self, platform):
         pos = platform.get_pos()
@@ -217,22 +196,6 @@ class Chunk:
             self.platforms.append(Platform(**kwargs))
 
         self.block_changes.append(self.RemoveChange(platform.get_global_indexer()))
-
-    def set_around_chunks(self, chunk_id: int, pos: int):
-        """
-        Chunks have an attribute that store the around chunks id for optimized sql query
-        the order is like this:
-            0
-        3  self  1
-            2
-
-        """
-        if self.around_chunks[pos] is None:
-            self.around_chunks[pos] = chunk_id
-            self.around_chunks_changes = True
-        else:
-            if self.around_chunks[pos] != chunk_id:
-                raise Exception(f"O around do chunk {self.index}, na posição {pos}, já estava setado, antigo:{self.around_chunks[pos]}, novo: {chunk_id}\nsround_chunks={self.around_chunks}")
 
     def array_abstraction(self):
         platforms = list()

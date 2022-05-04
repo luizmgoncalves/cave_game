@@ -40,8 +40,10 @@ class Personagem:
             if type(imagem) == list:
                 for sprite in imagem:
                     sprite.set_colorkey((255, 255, 255))
+                    sprite.convert()
             else:
                 imagem.set_colorkey((255, 255, 255))
+                imagem.convert()
 
         self.imagem = self.imagens[4]
 
@@ -71,7 +73,7 @@ class Personagem:
 class GerenciadorDeElementos:
     def __init__(self, janela):
         self.janela = janela
-        self.fps = 30
+        self.fps = 60
         self.personagem = Personagem(frame_rate=self.fps)
         self.platform_meta_data = PlatformData()
         self.loop_waiters = [MoveCharacterXWaiter(self.personagem), MoveCharacterYWaiter(self.personagem)]
@@ -96,38 +98,7 @@ class GerenciadorDeElementos:
         self.init_chunks()
 
     def init_chunks(self):
-        self.chunks['0, 0'].set_around_chunks(self.chunks['0, 1'].index, 1)
-        self.chunks['0, 0'].set_around_chunks(self.chunks['1, 0'].index, 2)
-
-        self.chunks['0, 1'].set_around_chunks(self.chunks['0, 0'].index, 3)
-        self.chunks['0, 1'].set_around_chunks(self.chunks['0, 2'].index, 1)
-        self.chunks['0, 1'].set_around_chunks(self.chunks['1, 1'].index, 2)
-
-        self.chunks['0, 2'].set_around_chunks(self.chunks['0, 1'].index, 3)
-        self.chunks['0, 2'].set_around_chunks(self.chunks['1, 2'].index, 2)
-
-        self.chunks['1, 0'].set_around_chunks(self.chunks['0, 0'].index, 0)
-        self.chunks['1, 0'].set_around_chunks(self.chunks['1, 1'].index, 1)
-        self.chunks['1, 0'].set_around_chunks(self.chunks['2, 0'].index, 2)
-
-        self.chunks['1, 1'].set_around_chunks(self.chunks['0, 1'].index, 0)
-        self.chunks['1, 1'].set_around_chunks(self.chunks['1, 2'].index, 1)
-        self.chunks['1, 1'].set_around_chunks(self.chunks['2, 1'].index, 2)
-        self.chunks['1, 1'].set_around_chunks(self.chunks['1, 0'].index, 3)
-
-        self.chunks['1, 2'].set_around_chunks(self.chunks['0, 2'].index, 0)
-        self.chunks['1, 2'].set_around_chunks(self.chunks['1, 1'].index, 3)
-        self.chunks['1, 2'].set_around_chunks(self.chunks['2, 2'].index, 2)
-
-        self.chunks['2, 0'].set_around_chunks(self.chunks['1, 0'].index, 0)
-        self.chunks['2, 0'].set_around_chunks(self.chunks['2, 1'].index, 1)
-
-        self.chunks['2, 1'].set_around_chunks(self.chunks['1, 1'].index, 0)
-        self.chunks['2, 1'].set_around_chunks(self.chunks['2, 0'].index, 3)
-        self.chunks['2, 1'].set_around_chunks(self.chunks['2, 2'].index, 1)
-
-        self.chunks['2, 2'].set_around_chunks(self.chunks['1, 2'].index, 0)
-        self.chunks['2, 2'].set_around_chunks(self.chunks['2, 1'].index, 3)
+        pass
 
     def monitor_de_lotes(self):
         # avançar horizontalmente
@@ -139,28 +110,13 @@ class GerenciadorDeElementos:
             self.chunks['0, 1'], self.chunks['1, 1'], self.chunks['2, 1'] = self.chunks['0, 2'], self.chunks[
                 '1, 2'], self.chunks['2, 2']
 
-            if self.chunks['0, 1'].around_chunks[1] is not None:
-                self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['0, 1'].loc[0] + 1, self.chunks['0, 1'].loc[1]],
-                    chunk_id=self.chunks['0, 1'].around_chunks[1], by_pos=False)
-            else:
-                self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
+            self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['0, 1'].loc[0] + 1, self.chunks['0, 1'].loc[1]])
 
-            if self.chunks['1, 1'].around_chunks[1] is not None:
-                self.chunks['1, 2'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 1'].loc[0] + 1, self.chunks['1, 1'].loc[1]],
-                    chunk_id=self.chunks['1, 1'].around_chunks[1], by_pos=False)
-            else:
-                self.chunks['1, 2'] = self.environment_generator.buscar_blocos(
+            self.chunks['1, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 1'].loc[0] + 1, self.chunks['1, 1'].loc[1]])
 
-            if self.chunks['2, 1'].around_chunks[1] is not None:
-                self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['2, 1'].loc[0] + 1, self.chunks['2, 1'].loc[1]],
-                    chunk_id=self.chunks['2, 1'].around_chunks[1], by_pos=False)
-            else:
-                self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
+            self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['2, 1'].loc[0] + 1, self.chunks['2, 1'].loc[1]])
 
             self.init_chunks()
@@ -170,28 +126,14 @@ class GerenciadorDeElementos:
                 '1, 1'], self.chunks['2, 1']
             self.chunks['0, 1'], self.chunks['1, 1'], self.chunks['2, 1'] = self.chunks['0, 0'], self.chunks[
                 '1, 0'], self.chunks['2, 0']
-            if self.chunks['0, 1'].around_chunks[3] is not None:
-                self.chunks['0, 0'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['0, 1'].loc[0] - 1, self.chunks['0, 1'].loc[1]],
-                    chunk_id=self.chunks['0, 1'].around_chunks[3], by_pos=False)
-            else:
-                self.chunks['0, 0'] = self.environment_generator.buscar_blocos(
+            
+            self.chunks['0, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['0, 1'].loc[0] - 1, self.chunks['0, 1'].loc[1]])
 
-            if self.chunks['1, 1'].around_chunks[3] is not None:
-                self.chunks['1, 0'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 1'].loc[0] - 1, self.chunks['1, 1'].loc[1]],
-                    chunk_id=self.chunks['1, 1'].around_chunks[3], by_pos=False)
-            else:
-                self.chunks['1, 0'] = self.environment_generator.buscar_blocos(
+            self.chunks['1, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 1'].loc[0] - 1, self.chunks['1, 1'].loc[1]])
 
-            if self.chunks['2, 1'].around_chunks[3] is not None:
-                self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['2, 1'].loc[0] - 1, self.chunks['2, 1'].loc[1]],
-                    chunk_id=self.chunks['2, 1'].around_chunks[3], by_pos=False)
-            else:
-                self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
+            self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['2, 1'].loc[0] - 1, self.chunks['2, 1'].loc[1]])
 
             self.init_chunks()
@@ -203,28 +145,13 @@ class GerenciadorDeElementos:
             self.chunks['1, 0'], self.chunks['1, 1'], self.chunks['1, 2'] = self.chunks['0, 0'], self.chunks[
                 '0, 1'], self.chunks['0, 2']
 
-            if self.chunks['1, 0'].around_chunks[0] is not None:
-                self.chunks['0, 0'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 0'].loc[0], self.chunks['1, 0'].loc[1] - 1],
-                    chunk_id=self.chunks['1, 0'].around_chunks[0], by_pos=False)
-            else:
-                self.chunks['0, 0'] = self.environment_generator.buscar_blocos(
+            self.chunks['0, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 0'].loc[0], self.chunks['1, 0'].loc[1] - 1])
 
-            if self.chunks['1, 1'].around_chunks[0] is not None:
-                self.chunks['0, 1'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 1'].loc[0], self.chunks['1, 1'].loc[1] - 1],
-                    chunk_id=self.chunks['1, 1'].around_chunks[0], by_pos=False)
-            else:
-                self.chunks['0, 1'] = self.environment_generator.buscar_blocos(
+            self.chunks['0, 1'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 1'].loc[0], self.chunks['1, 1'].loc[1] - 1])
 
-            if self.chunks['1, 2'].around_chunks[0] is not None:
-                self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] - 1],
-                    chunk_id=self.chunks['1, 2'].around_chunks[0], by_pos=False)
-            else:
-                self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
+            self.chunks['0, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] - 1])
 
             self.init_chunks()
@@ -235,28 +162,13 @@ class GerenciadorDeElementos:
             self.chunks['1, 0'], self.chunks['1, 1'], self.chunks['1, 2'] = self.chunks['2, 0'], self.chunks[
                 '2, 1'], self.chunks['2, 2']
 
-            if self.chunks['1, 0'].around_chunks[2] is not None:
-                self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 0'].loc[0], self.chunks['1, 0'].loc[1] + 1],
-                    chunk_id=self.chunks['1, 0'].around_chunks[2], by_pos=False)
-            else:
-                self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
+            self.chunks['2, 0'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 0'].loc[0], self.chunks['1, 0'].loc[1] + 1])
 
-            if self.chunks['1, 1'].around_chunks[2] is not None:
-                self.chunks['2, 1'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 1'].loc[0], self.chunks['1, 1'].loc[1] + 1],
-                    chunk_id=self.chunks['1, 1'].around_chunks[2], by_pos=False)
-            else:
-                self.chunks['2, 1'] = self.environment_generator.buscar_blocos(
+            self.chunks['2, 1'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 1'].loc[0], self.chunks['1, 1'].loc[1] + 1])
 
-            if self.chunks['1, 2'].around_chunks[2] is not None:
-                self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
-                    [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] + 1],
-                    chunk_id=self.chunks['1, 2'].around_chunks[2], by_pos=False)
-            else:
-                self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
+            self.chunks['2, 2'] = self.environment_generator.buscar_blocos(
                     [self.chunks['1, 2'].loc[0], self.chunks['1, 2'].loc[1] + 1])
 
             self.init_chunks()
@@ -392,13 +304,15 @@ if __name__ == '__main__':
 
     pygame.display.init()
 
-    screen = pygame.display.set_mode((800, 500), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((700, 400), pygame.RESIZABLE, 16)
     pygame.display.set_caption('Cube\'s Odyssey')
 
     infoObject = pygame.display.Info()
     print(infoObject)
     WIDTH = int(infoObject.current_w)
     HEIGHT = int(infoObject.current_h)
+
+    pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP, pygame.VIDEORESIZE])
 
     imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
                                     (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
