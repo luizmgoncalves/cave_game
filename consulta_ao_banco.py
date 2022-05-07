@@ -8,6 +8,13 @@ class ConsultorDB:
         self.banco_sql = sqlite3.connect('game_db.db')
         self.cursor = self.banco_sql.cursor()
 
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS last_index
+                    (temp integer)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS chunks
+                    (temp integer)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS blocks
+                    (temp integer)''')    
+
         self.last_block_index = None
         self.last_chunk_index = None
 
