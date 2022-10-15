@@ -14,10 +14,10 @@ class Personagem:
     def __init__(self, frame_rate, owner):
         self.rect = pygame.Rect((200, 0), self.dimensions)
         self.color = pygame.Color(0, 100, 0, a=0)
-        self.velocidade = [PixelPerSecond(0, 500, frame_rate), PixelPerSecond(0, 2000, frame_rate)]
-        self.gravidade = PixelPerSecondSquared(2000, frame_rate)
-        self.aceleracao_horizontal = PixelPerSecondSquared(3000, frame_rate)
-        self.atrito = Friction(2000, frame_rate)
+        self.velocidade = [PixelPerSecond(0, 500, owner), PixelPerSecond(0, 2000, owner)]
+        self.gravidade = PixelPerSecondSquared(2000, owner)
+        self.aceleracao_horizontal = PixelPerSecondSquared(3000, owner)
+        self.atrito = Friction(2000, owner)
         self.contador = 0
         self.owner = owner
         self.falling = False
@@ -83,6 +83,7 @@ class GerenciadorDeElementos:
     def __init__(self, janela):
         self.janela = janela
         self.fps = 60
+        self.fps_r = 60
         self.personagem = Personagem(frame_rate=self.fps, owner=self)
         self.platform_meta_data = PlatformData()
         self.loop_waiters = [MoveCharacterXWaiter(self.personagem, self), MoveCharacterYWaiter(self.personagem, self)]
@@ -320,7 +321,7 @@ if __name__ == '__main__':
 
     pygame.display.init()
 
-    screen = pygame.display.set_mode((700, 400), pygame.RESIZABLE, 16)
+    screen = pygame.display.set_mode((700, 400), pygame.RESIZABLE, 16, vsync=1)
     pygame.display.set_caption('Cube\'s Odyssey')
 
     infoObject = pygame.display.Info()
@@ -353,8 +354,9 @@ if __name__ == '__main__':
             gerenciador.rendered = False
 
         mainClock.tick(gerenciador.fps)
+        gerenciador.fps_r = mainClock.get_fps()
         if counter % 100 == 0:
-            print(mainClock.get_fps())
+            print(gerenciador.fps_r)
 
         counter += 1
 

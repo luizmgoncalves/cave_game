@@ -1,7 +1,7 @@
 class PixelPerSecond:
-    def __init__(self, value, max_vel, frame_rate):
+    def __init__(self, value, max_vel, owner):
         self.value = value
-        self.frame_rate = frame_rate
+        self.owner = owner
         self.max_vel = max_vel
         self.min_vel = -max_vel
 
@@ -17,28 +17,31 @@ class PixelPerSecond:
             self.value += value
 
     def get(self):
-        return int(self.value/self.frame_rate)
+        if self.owner.fps_r == 0:
+            self.owner.fps_r = 60
+        
+        return int(self.value/self.owner.fps_r)
 
 
 class PixelPerSecondSquared:
-    def __init__(self, value, frame_rate):
+    def __init__(self, value, owner):
         self.value = value
-        self.frame_rate = frame_rate
+        self.owner = owner
 
     def acelerate_vel(self, velocity: PixelPerSecond, negative=False):
         if not negative:
-            velocity.add(self.value/self.frame_rate)
+            velocity.add(self.value/self.owner.fps_r)
             return
 
-        velocity.add(-self.value/self.frame_rate)
+        velocity.add(-self.value/self.owner.fps_r)
 
 
 class Friction(PixelPerSecondSquared):
-    def __init__(self, value, frame_rate):
-        super().__init__(value, frame_rate)
+    def __init__(self, value, owner):
+        super().__init__(value, owner)
 
     def decelerate(self, velocity: PixelPerSecond):
-        if abs(velocity.value) < (self.value/self.frame_rate):
+        if abs(velocity.value) < (self.value/self.owner.fps_r):
             velocity.set(0)
         elif velocity.value > 0:
             self.acelerate_vel(velocity, negative=True)
