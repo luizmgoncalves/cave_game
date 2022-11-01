@@ -9,15 +9,15 @@ pygame.init()
 
 
 class Personagem:
-    dimensions = [30, 80]
+    dimensions = [40, 40]
 
     def __init__(self, frame_rate, owner):
         self.rect = pygame.Rect((200, 0), self.dimensions)
         self.color = pygame.Color(0, 100, 0, a=0)
-        self.velocidade = [PixelPerSecond(0, 500, owner), PixelPerSecond(0, 2000, owner)]
+        self.velocidade = [PixelPerSecond(0, 600, owner), PixelPerSecond(0, 1500, owner)]
         self.gravidade = PixelPerSecondSquared(2000, owner)
         self.aceleracao_horizontal = PixelPerSecondSquared(3000, owner)
-        self.atrito = Friction(2000, owner)
+        self.atrito = Friction(4000, owner)
         self.contador = 0
         self.owner = owner
         self.falling = False
@@ -28,27 +28,27 @@ class Personagem:
         self.down = False
 
         self.imagens = [
-            [pygame.transform.scale(pygame.image.load(f'game_images/previous/d{x}.png'), tuple(self.dimensions)).convert() for x in
-             range(1, 7)],
-            [pygame.transform.flip(pygame.transform.scale(pygame.image.load(f'game_images/previous/d{x}.png'), tuple(self.dimensions)), True, False).convert() for x in
-             range(1, 7)],
-            pygame.transform.scale(pygame.image.load('game_images/previous/d3.png'), tuple(self.dimensions)).convert(),
-            pygame.transform.flip(pygame.transform.scale(pygame.image.load('game_images/previous/d3.png'), tuple(self.dimensions)), True, False).convert(),
-            pygame.transform.scale(pygame.image.load('game_images/previous/d1.png'), tuple(self.dimensions)).convert()]
+            [pygame.transform.scale(pygame.image.load(f'game_images/d{x}.png'), tuple(self.dimensions)).convert() for x in
+             range(1, 6)],
+            [pygame.transform.flip(pygame.transform.scale(pygame.image.load(f'game_images/d{x}.png'), tuple(self.dimensions)), True, False).convert() for x in
+             range(1, 6)],
+            pygame.transform.scale(pygame.image.load('game_images/d3.png'), tuple(self.dimensions)).convert(),
+            pygame.transform.flip(pygame.transform.scale(pygame.image.load('game_images/d3.png'), tuple(self.dimensions)), True, False).convert(),
+            pygame.transform.scale(pygame.image.load('game_images/d1.png'), tuple(self.dimensions)).convert()]
 
         for imagem in self.imagens:
             if type(imagem) == list:
                 for sprite in imagem:
-                    sprite.set_colorkey((255, 255, 255))
+                    #sprite.set_colorkey((255, 255, 255))
                     sprite.convert()
             else:
-                imagem.set_colorkey((255, 255, 255))
+                #imagem.set_colorkey((255, 255, 255))
                 imagem.convert()
 
         self.imagem = self.imagens[4]
 
     def atualizar_frame(self):
-        if self.contador >= 12:
+        if self.contador >= 50:
             self.contador = 0        
 
         if self.falling:
@@ -62,14 +62,14 @@ class Personagem:
                 self.imagem = self.imagens[2]
 
         elif self.left:
-            if self.imagem != self.imagens[1][(self.contador // 2)]:
+            if self.imagem != self.imagens[1][(self.contador // 10)]:
                     self.owner.pre_render_changes = True
-            self.imagem = self.imagens[1][(self.contador // 2)]
+            self.imagem = self.imagens[1][(self.contador // 10)]
 
         elif self.right:
-            if self.imagem != self.imagens[0][(self.contador // 2)]:
+            if self.imagem != self.imagens[0][(self.contador // 10)]:
                     self.owner.pre_render_changes = True
-            self.imagem = self.imagens[0][(self.contador // 2)]
+            self.imagem = self.imagens[0][(self.contador // 10)]
 
         else:
             if self.imagem != self.imagens[4]:
@@ -192,7 +192,7 @@ class GerenciadorDeElementos:
                 for waiter in self.loop_waiters:
                     waiter.run(platform)
 
-                if WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-50 and -50<(platform.y + self.pos_de_apresentacao[1])<HEIGHT:
+                if WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-Chunk.platform_dimensions[0] and -Chunk.platform_dimensions[1]<(platform.y + self.pos_de_apresentacao[1])<HEIGHT:
                     if self.pos_render_changes:
                         if platform.layer==0:
                             self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
@@ -259,6 +259,7 @@ class GerenciadorDeElementos:
         self.contador += 1
 
     def atualizar(self):
+        self.pre_render_changes = True
         self.atualizar_contador()
 
         self.its_safe_for_commit_verifier()
@@ -316,8 +317,13 @@ class GerenciadorDeElementos:
                 self.pre_render_changes = True
 
 
+def update_fps():
+	fps = str(int(mainClock.get_fps()))
+	fps_text = font.render(fps, 1, pygame.Color("coral"))
+	return fps_text
+
 if __name__ == '__main__':
-    DEBUG = False
+    DEBUG = True
 
     pygame.display.init()
 
@@ -326,6 +332,7 @@ if __name__ == '__main__':
 
     infoObject = pygame.display.Info()
     print(infoObject)
+    font = pygame.font.SysFont("Arial", 18)
     WIDTH = int(infoObject.current_w)
     HEIGHT = int(infoObject.current_h)
 
@@ -350,13 +357,13 @@ if __name__ == '__main__':
             break
 
         if gerenciador.rendered:
-            pygame.display.update()
+            screen.blit(update_fps(), (10,0))
+            pygame.display.flip()
             gerenciador.rendered = False
 
         mainClock.tick(gerenciador.fps)
         gerenciador.fps_r = mainClock.get_fps()
-        if counter % 100 == 0:
-            print(gerenciador.fps_r)
+        
 
         counter += 1
 

@@ -2,6 +2,7 @@ import consulta_ao_banco
 import pygame
 import debugger
 import numpy as np
+from perlin_noise import PerlinNoise
 
 
 class EnvironmentGenerator:
@@ -106,9 +107,20 @@ class EnvironmentGenerator:
     def environment_generator(pos_absolute=[0, 0]):
         ambiente = np.uint8(np.zeros((Chunk.chunk_length, Chunk.chunk_length, 2)))
         if pos_absolute[1] == 0:
-            return EnvironmentGenerator.surface_generator()
-
+            return EnvironmentGenerator.surface_generator(pos_absolute[0])
+            
+        elif pos_absolute[1] == 1:
+            noise = PerlinNoise(octaves=1)
+            for line in range(0, Chunk.chunk_length):
+                for column in range(0, Chunk.chunk_length):
+                    limit = Chunk.chunk_length/4+int(noise(pos_absolute[0]+column/Chunk.chunk_length)*Chunk.chunk_length)
+                    tipo = 3
+                    if line < limit:
+                        tipo = 2
+                    ambiente[line][column] = [tipo, tipo]
+            return ambiente
         elif pos_absolute[1] > 0:
+            noise = PerlinNoise(octaves=1)
             for line in range(0, Chunk.chunk_length):
                 for column in range(0, Chunk.chunk_length):
                     ambiente[line][column] = [3, 3]
@@ -116,22 +128,25 @@ class EnvironmentGenerator:
         else:
             return ambiente
 
-    @staticmethod
-    def surface_generator():
+    def surface_generator(index):
         import random
         block_array = np.uint8(np.zeros((Chunk.chunk_length, Chunk.chunk_length, 2)))
         surface_line = 10
         first_line = True
+        noise = PerlinNoise(octaves=1)
 
-        for line in range(surface_line, Chunk.chunk_length):
+        for line in range(0, Chunk.chunk_length):
             for column in range(0, Chunk.chunk_length):
-                if first_line:
+                limit = Chunk.chunk_length/2+int(noise(index+column/Chunk.chunk_length)*Chunk.chunk_length)
+                if line == limit:
                     tipo = 1
-                else:
+                elif line > limit:
                     tipo = 2
+                else:
+                    continue
                 block_array[line][column] = [tipo, tipo]
-            first_line = False
 
+        '''
         trees = [random.randrange(0, Chunk.chunk_length, random.randint(2, 6)) for x in range(0, 3)]
         trees = set(trees)
         trees = [[tree, random.randint(2, 5)] for tree in trees]
@@ -140,7 +155,7 @@ class EnvironmentGenerator:
             for block in range(tree[1]):
                 block_array[height_atual][tree[0]] = [4, 0]
                 height_atual -= 1
-
+        '''
         return block_array
 
 
@@ -158,8 +173,8 @@ class Chunk:
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
-    platform_dimensions = [50, 50]
-    chunk_length = 40
+    platform_dimensions = [80, 80]
+    chunk_length = 10
     dimensions = (platform_dimensions[0] * chunk_length, platform_dimensions[1] * chunk_length)
 
     def __init__(self, loc, index, blocks=None):

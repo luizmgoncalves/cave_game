@@ -1,0 +1,6 @@
+{
+    "game_db": {
+        "seed": "12345",
+        "db": "game_db.db"
+    }
+}
