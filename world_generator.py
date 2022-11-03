@@ -114,20 +114,18 @@ class EnvironmentGenerator:
     def environment_generator(self, pos_absolute=[0, 0]):
         ambiente = np.uint8(np.zeros((Chunk.chunk_length, Chunk.chunk_length, 2)))
         if pos_absolute[1] == 0:
-            return EnvironmentGenerator.surface_generator(pos_absolute[0])
+            return self.surface_generator(pos_absolute[0])
             
         elif pos_absolute[1] == 1:
-            noise = PerlinNoise(octaves=1)
             for line in range(0, Chunk.chunk_length):
                 for column in range(0, Chunk.chunk_length):
-                    limit = Chunk.chunk_length/4+int(noise(pos_absolute[0]+column/Chunk.chunk_length)*Chunk.chunk_length)
+                    limit = Chunk.chunk_length/4+int(self.noise(pos_absolute[0]+column/Chunk.chunk_length)*Chunk.chunk_length)
                     tipo = 3
                     if line < limit:
                         tipo = 2
                     ambiente[line][column] = [tipo, tipo]
             return ambiente
         elif pos_absolute[1] > 0:
-            noise = PerlinNoise(octaves=1)
             for line in range(0, Chunk.chunk_length):
                 for column in range(0, Chunk.chunk_length):
                     ambiente[line][column] = [3, 3]
@@ -135,16 +133,15 @@ class EnvironmentGenerator:
         else:
             return ambiente
 
-    def surface_generator(index):
+    def surface_generator(self, index):
         import random
         block_array = np.uint8(np.zeros((Chunk.chunk_length, Chunk.chunk_length, 2)))
         surface_line = 10
         first_line = True
-        noise = PerlinNoise(octaves=1)
 
         for line in range(0, Chunk.chunk_length):
             for column in range(0, Chunk.chunk_length):
-                limit = Chunk.chunk_length/2+int(noise(index+column/Chunk.chunk_length)*Chunk.chunk_length)
+                limit = Chunk.chunk_length/2+int(self.noise(index+column/Chunk.chunk_length)*Chunk.chunk_length)
                 if line == limit:
                     tipo = 1
                 elif line > limit:
