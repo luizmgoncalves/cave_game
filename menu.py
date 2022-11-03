@@ -58,6 +58,8 @@ class Menu:
                         Button("Criar mapa", 100, 410, action=self.init_writing),
                         Button("Quit", 100, 520, action=self.quit),
                         ]
+        
+        self.play_world = ''
 
         self.labels = [Label("Cave Game", 100, 100)]
 
@@ -77,6 +79,10 @@ class Menu:
         self.worlds.pop(world)
         self.update_worlds()
         self.stop_state()
+    
+    def play(self, world):
+        self.curr_state = 'playing'
+        self.play_world = world
 
     def init_world_selection(self, world):
         if not self.curr_state == 'world_s':
@@ -88,7 +94,7 @@ class Menu:
             self.contents = []
             self.contents.extend([
                                 Button("Delete", 300, 500, action=closure(self.delete_world, world)), 
-                                Button("Play", 800, 500, action=lambda:None)
+                                Button("Play", 800, 500, action=closure(self.play, world))
                                 ])
             return
 
@@ -116,7 +122,7 @@ class Menu:
         self.contents = self.buttons+self.labels
     
     def quit(self):
-        self.QUIT = True
+        self.curr_state = 'quitting'
     
     def show_worlds(self):
         if not self.showing:
@@ -190,7 +196,7 @@ class Menu:
     def event_handler(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.QUIT = True
+                self.curr_state = 'quiting'
             if event.type == pygame.MOUSEMOTION:
                 for button in self.contents:
                     if not isinstance(button, Button):
@@ -211,7 +217,7 @@ class Menu:
                         button.action()
 
             if event.type == pygame.WINDOWRESIZED:
-                self.bg_image = pygame.transform.scale(self._bg_image, (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
+                self.bg_image = pygame.transform.scale(self.bg_image, (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
             
             if event.type == pygame.KEYDOWN:
                 if event.key ==  pygame.K_ESCAPE and self.curr_state:

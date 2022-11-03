@@ -80,8 +80,14 @@ class Personagem:
 
 
 class GerenciadorDeElementos:
-    def __init__(self, janela):
+    def __init__(self, janela, world_name: str, DEBUG=False):
         self.janela = janela
+        infoObject = pygame.display.Info()
+        self.WIDTH = int(infoObject.current_w)
+        self.HEIGHT = int(infoObject.current_h)
+        self.DEBUG = DEBUG
+        self.bg_image = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
+                                    (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
         self.fps = 60
         self.fps_r = 60
         self.personagem = Personagem(frame_rate=self.fps, owner=self)
@@ -93,7 +99,7 @@ class GerenciadorDeElementos:
         self.rendered = False
         self.contador = 0
         self.pos_de_apresentacao = [0, 0]
-        self.environment_generator = EnvironmentGenerator('test123')
+        self.environment_generator = EnvironmentGenerator(world_name)
         self.main_platforms_loop_requests = {'mining_request': False,
                                              'update_colidable_platforms': False,
                                              'put_in': False}
@@ -178,7 +184,6 @@ class GerenciadorDeElementos:
 
 
     def update_platforms(self):
-        global HEIGHT, WIDTH
         self.monitor_de_lotes()
 
 
@@ -192,7 +197,7 @@ class GerenciadorDeElementos:
                 for waiter in self.loop_waiters:
                     waiter.run(platform)
 
-                if WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-Chunk.platform_dimensions[0] and -Chunk.platform_dimensions[1]<(platform.y + self.pos_de_apresentacao[1])<HEIGHT:
+                if self.WIDTH>=(platform.x +self.pos_de_apresentacao[0])>=-Chunk.platform_dimensions[0] and -Chunk.platform_dimensions[1]<(platform.y + self.pos_de_apresentacao[1])<self.HEIGHT:
                     if self.pos_render_changes:
                         if platform.layer==0:
                             self.janela.blit(self.platform_meta_data.PLATFORM_IMAGES[platform.type], (platform.x+self.pos_de_apresentacao[0], platform.y+self.pos_de_apresentacao[1]))
@@ -259,7 +264,6 @@ class GerenciadorDeElementos:
         self.contador += 1
 
     def atualizar(self):
-        self.pre_render_changes = True
         self.atualizar_contador()
 
         self.its_safe_for_commit_verifier()
@@ -281,7 +285,7 @@ class GerenciadorDeElementos:
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 self.QUIT = True
                 self.environment_generator.big_last_save()
-                if DEBUG:
+                if self.DEBUG:
                     self.environment_generator.consultor.clear_database()
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -308,48 +312,27 @@ class GerenciadorDeElementos:
                     self.personagem.up = False
             
             elif event.type == pygame.VIDEORESIZE:
-                global imagem, HEIGHT, WIDTH
-                imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
+                self.bg_image = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
                                     (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
                 infoObject = pygame.display.Info()
-                WIDTH = int(infoObject.current_w)
-                HEIGHT = int(infoObject.current_h)
+                self.WIDTH = int(infoObject.current_w)
+                self.HEIGHT = int(infoObject.current_h)
                 self.pre_render_changes = True
 
 
-def update_fps():
-	fps = str(int(mainClock.get_fps()))
-	fps_text = font.render(fps, 1, pygame.Color("coral"))
-	return fps_text
-
-if __name__ == '__main__':
-    DEBUG = False
-
-    pygame.display.init()
-
-    screen = pygame.display.set_mode((700, 400), pygame.RESIZABLE, 16, vsync=1)
-    pygame.display.set_caption('Cube\'s Odyssey')
-
-    infoObject = pygame.display.Info()
-    print(infoObject)
-    font = pygame.font.SysFont("Arial", 18)
-    WIDTH = int(infoObject.current_w)
-    HEIGHT = int(infoObject.current_h)
-
+def run(screen: pygame.surface.Surface, world_name: str, debug: bool=False):
     pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP, pygame.VIDEORESIZE])
 
-    imagem = pygame.transform.scale(pygame.image.load('./game_images/forest_background.webp'),
-                                    (pygame.display.Info().current_w, pygame.display.Info().current_h)).convert()
-
-    gerenciador = GerenciadorDeElementos(screen)
+    gerenciador = GerenciadorDeElementos(screen, world_name, debug)
 
     mainClock = pygame.time.Clock()
-    counter = 0
+
+    font = pygame.font.SysFont("Arial", 18)
 
     # loop #
     while 1:
         if gerenciador.pos_render_changes:
-            screen.blit(imagem, (0, 0))
+            screen.blit(gerenciador.bg_image, (0, 0))
 
         gerenciador.atualizar()
 
@@ -357,15 +340,25 @@ if __name__ == '__main__':
             break
 
         if gerenciador.rendered:
-            screen.blit(update_fps(), (10,0))
+            fps = str(int(mainClock.get_fps()))
+            screen.blit(font.render(fps, 1, pygame.Color("coral")), (10,0))
             pygame.display.flip()
             gerenciador.rendered = False
 
         mainClock.tick(gerenciador.fps)
         gerenciador.fps_r = mainClock.get_fps()
-        
-
-        counter += 1
 
     pygame.quit()
     sys.exit()
+
+if __name__ == '__main__':
+    DEBUG = True
+
+    pygame.display.init()
+
+    screen = pygame.display.set_mode((700, 400), pygame.RESIZABLE, 16, vsync=1)
+    pygame.display.set_caption('Cube\'s Odyssey')
+
+    #screen = screen ## world_name = test123 ## debug = DEBUG
+
+    run(screen, 'test344', DEBUG)
