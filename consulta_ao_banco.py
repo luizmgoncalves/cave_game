@@ -1,6 +1,7 @@
 import debugger
 import sqlite3
 import world_generator
+import os
 
 
 class ConsultorDB:
@@ -126,6 +127,8 @@ def generate_db(name: str):
         PRIMARY KEY("global_indexer")
     );""")
 
+def delete_db(name: str):
+    os.remove(f'db/{name}.db')
 
 
 if __name__ == '__main__':

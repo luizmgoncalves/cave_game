@@ -66,24 +66,30 @@ class Menu:
         self.curr_state = ''
 
         self.writing_label = Label("test", 600, 400, bg_color = (0, 0, 0, 100))
-
-        self.configs_contents =[Button("Delete", 300, 500),
-                                Button("Play", 500, 300)]
-
         with open("worlds.json", 'r') as worlds:
-            self.worlds =  eval(str(json.load(worlds)))
+            self.worlds: dict =  eval(str(json.load(worlds)))
 
         self.generate_worlds_buttons()
+    
+    def delete_world(self, world):
+        print('deleting', world)
+        consulta_ao_banco.delete_db(world)
+        self.worlds.pop(world)
+        self.update_worlds()
+        self.stop_state()
 
-    def init_world_selection(self):
-        if not self.curr_state == 'config':
-            self.curr_state = 'config'
+    def init_world_selection(self, world):
+        if not self.curr_state == 'world_s':
+            self.curr_state = 'world_s'
             self.bg_image = self.screen.copy()
             shadow = pygame.Surface(self.bg_image.get_size(), pygame.SRCALPHA)
             shadow.fill((0, 0, 0, 100))
             self.bg_image.blit(shadow, (0, 0))
             self.contents = []
-            self.contents.append(self.configs_contents)
+            self.contents.extend([
+                                Button("Delete", 300, 500, action=closure(self.delete_world, world)), 
+                                Button("Play", 800, 500, action=lambda:None)
+                                ])
             return
 
         self.stop_state()
@@ -113,24 +119,37 @@ class Menu:
         self.QUIT = True
     
     def show_worlds(self):
-        self.showing = not self.showing
-        if self.showing:
+        if not self.showing:
+            self.showing = True
             self.buttons.extend(self.world_buttons)
             self.contents.extend(self.world_buttons)
             return
         
+        self.un_show_worlds()
+        
+    def un_show_worlds(self):
+        self.showing = False
         for button in self.world_buttons:
-            self.buttons.remove(button)
-            self.contents.remove(button)
+            try:
+                self.buttons.remove(button)
+                self.contents.remove(button)
+            except:
+                pass
     
     def generate_worlds_buttons(self):
         self.world_buttons = []
         pos_y = 100
         for world in self.worlds:
-            self.world_buttons.append(Button(world, 550, pos_y))
+            self.world_buttons.append(
+                Button(world, 
+                       550, 
+                       pos_y,
+                       action = closure(self.init_world_selection, world)
+                    ))
             pos_y += 110
 
     def update_worlds(self):
+        self.un_show_worlds()
         self.generate_worlds_buttons()
         with open("worlds.json", 'w') as worlds:
             worlds.write(json.JSONEncoder().encode(self.worlds))
@@ -210,4 +229,7 @@ class Menu:
                             self.writing_label.content += event.unicode
                             self.update_writing_label()
                             
-            
+def closure(func, arg):
+            def new_func():
+                func(arg)
+            return new_func
