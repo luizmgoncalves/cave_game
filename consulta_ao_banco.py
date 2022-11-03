@@ -102,6 +102,32 @@ class ConsultorDB:
         b.get_atual_delay('o ultimo e maior commit!')
 
 
+def generate_db(name: str):
+    database = sqlite3.connect(f'db/{name}.db')
+    cursor = database.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS "last_index" (
+        "last_block_index"	INTEGER,
+        "last_chunk_index"	INTEGER
+    );""")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS "chunks" (
+        "indexer"	INTEGER,
+        "chunk"	TEXT,
+        "around_chunks"	TEXT,
+        PRIMARY KEY("indexer")
+    );""")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS "blocks" (
+        "global_indexer"	INTEGER,
+        "indexer"	INTEGER,
+        "ptype"	INTEGER,
+        "chunk"	TEXT,
+        PRIMARY KEY("global_indexer")
+    );""")
+
+
+
 if __name__ == '__main__':
     def CDB():
         db = ConsultorDB()

@@ -1,6 +1,1 @@
-{
-    "game_db": {
-        "seed": "12345",
-        "db": "game_db.db"
-    }
-}
+{"game_db": {"seed": "12345", "db": "game_db.db"}, "debug": {"seed": "12345", "db": "debug.db"}, "80ff": {"seed": "ypb5b", "db": "80ff.db"}, "test80ff": {"seed": "q2ppz", "db": "test80ff.db"}, "ola mundo": {"seed": "7rwv2", "db": "ola mundo.db"}, "teste1": {"seed": "kokf1", "db": "teste1.db"}, "teste": {"seed": "aff2o", "db": "teste.db"}}
