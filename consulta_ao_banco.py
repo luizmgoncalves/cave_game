@@ -5,8 +5,8 @@ import os
 
 
 class ConsultorDB:
-    def __init__(self):
-        self.banco_sql = sqlite3.connect('game_db.db')
+    def __init__(self, world):
+        self.banco_sql = sqlite3.connect(f'db/{world}.db')
         self.cursor = self.banco_sql.cursor()
 
         self.last_block_index = None

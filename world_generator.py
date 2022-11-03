@@ -1,13 +1,20 @@
 import consulta_ao_banco
 import pygame
 import debugger
+import json
 import numpy as np
 from perlin_noise import PerlinNoise
 
 
 class EnvironmentGenerator:
-    def __init__(self):
-        self.consultor = consulta_ao_banco.ConsultorDB()
+    def __init__(self, world):
+        with open("worlds.json", 'r') as worlds:
+            worlds: dict = eval(str(json.load(worlds)))
+        
+        self.noise = PerlinNoise(octaves=1, seed=worlds[world]['seed'])
+
+        self.consultor = consulta_ao_banco.ConsultorDB(world)
+        
         self.have_changes = False
         self.all_chunks = {}
         self.all_chunks_pos = {}
@@ -46,7 +53,7 @@ class EnvironmentGenerator:
 
             self.have_changes = True
 
-        if chunk.block_changes:
+        elif chunk.block_changes:
             block_list = list()
 
             for change in chunk.block_changes:
@@ -76,7 +83,8 @@ class EnvironmentGenerator:
             # Already exists
             chunk = self.all_chunks[result]
         except KeyError: # Not exists yet
-            chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index)
+            chunk = self.all_chunks[self.consultor.last_chunk_index] = Chunk(pos, self.consultor.last_chunk_index, blocks=self.environment_generator(pos))
+            chunk.was_added = True
             self.all_chunks_pos[pos_p] = self.consultor.last_chunk_index
             self.consultor.increment_last_chunk_index()
 
@@ -103,8 +111,7 @@ class EnvironmentGenerator:
 
         return chunk_blocks
 
-    @staticmethod
-    def environment_generator(pos_absolute=[0, 0]):
+    def environment_generator(self, pos_absolute=[0, 0]):
         ambiente = np.uint8(np.zeros((Chunk.chunk_length, Chunk.chunk_length, 2)))
         if pos_absolute[1] == 0:
             return EnvironmentGenerator.surface_generator(pos_absolute[0])
@@ -184,10 +191,6 @@ class Chunk:
         self.block_changes = list()
 
         self.was_added = False
-
-        if self.blocks is None:
-            self.blocks = EnvironmentGenerator.environment_generator(self.loc)
-            self.was_added = True
 
         self.len_platforms = 0
 

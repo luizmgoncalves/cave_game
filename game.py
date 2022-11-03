@@ -93,7 +93,7 @@ class GerenciadorDeElementos:
         self.rendered = False
         self.contador = 0
         self.pos_de_apresentacao = [0, 0]
-        self.environment_generator = EnvironmentGenerator()
+        self.environment_generator = EnvironmentGenerator('test123')
         self.main_platforms_loop_requests = {'mining_request': False,
                                              'update_colidable_platforms': False,
                                              'put_in': False}
@@ -323,7 +323,7 @@ def update_fps():
 	return fps_text
 
 if __name__ == '__main__':
-    DEBUG = True
+    DEBUG = False
 
     pygame.display.init()
 

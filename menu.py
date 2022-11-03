@@ -159,7 +159,7 @@ class Menu:
             return False
         
         from random import choice
-        seed = "".join([choice("qwertyuiopasdfghjklzxcvbnm1234567890") for _ in range(5)])
+        seed = int("".join([choice("1234567890") for _ in range(5)]))
 
         new_world = {'seed': seed, "db": f'{self.writing_label.content}.db'}
 
