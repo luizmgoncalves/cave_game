@@ -94,6 +94,7 @@ class GerenciadorDeElementos:
         self.platform_meta_data = PlatformData()
         self.loop_waiters = [MoveCharacterXWaiter(self.personagem, self), MoveCharacterYWaiter(self.personagem, self)]
         self.QUIT = False
+        self.retornar = False
         self.pre_render_changes = False
         self.pos_render_changes = False
         self.rendered = False
@@ -283,10 +284,14 @@ class GerenciadorDeElementos:
     def monitor_de_movimentos(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                self.QUIT = True
                 self.environment_generator.big_last_save()
                 if self.DEBUG:
                     self.environment_generator.consultor.clear_database()
+                
+                if event.type == pygame.QUIT:
+                    self.QUIT = True
+                else:
+                    self.retornar = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.verificador_clicar_bloco(event.pos)
@@ -337,6 +342,9 @@ def run(screen: pygame.surface.Surface, world_name: str, debug: bool=False):
         gerenciador.atualizar()
 
         if gerenciador.QUIT:
+            sys.exit()
+        
+        if gerenciador.retornar:
             break
 
         if gerenciador.rendered:
@@ -348,8 +356,6 @@ def run(screen: pygame.surface.Surface, world_name: str, debug: bool=False):
         mainClock.tick(gerenciador.fps)
         gerenciador.fps_r = mainClock.get_fps()
 
-    pygame.quit()
-    sys.exit()
 
 if __name__ == '__main__':
     DEBUG = True

@@ -78,7 +78,6 @@ class Menu:
         consulta_ao_banco.delete_db(world)
         self.worlds.pop(world)
         self.update_worlds()
-        self.stop_state()
     
     def play(self, world):
         self.curr_state = 'playing'
@@ -196,7 +195,7 @@ class Menu:
     def event_handler(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.curr_state = 'quiting'
+                self.curr_state = 'quitting'
             if event.type == pygame.MOUSEMOTION:
                 for button in self.contents:
                     if not isinstance(button, Button):

@@ -12,14 +12,20 @@ if __name__ == '__main__':
 
     menu = Menu(screen)
 
+    mainClock = pygame.time.Clock()
+
     while 1:
         menu.render()
         menu.event_handler()
-        if menu.curr_state in ['quitting', 'playing']:
-            break
+        match menu.curr_state:
+            case 'quitting':
+                break
+            case 'playing':
+                menu.stop_state()
+                game.run(screen, menu.play_world)
     
     if menu.curr_state == 'quitting':
         sys.exit()
     
-    game.run(screen, menu.play_world)
+    
     
