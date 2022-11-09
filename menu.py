@@ -78,6 +78,7 @@ class Menu:
         consulta_ao_banco.delete_db(world)
         self.worlds.pop(world)
         self.update_worlds()
+        self.stop_state()
     
     def play(self, world):
         self.curr_state = 'playing'
