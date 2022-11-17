@@ -141,7 +141,7 @@ class EnvironmentGenerator:
 
         for line in range(0, Chunk.chunk_length):
             for column in range(0, Chunk.chunk_length):
-                limit = Chunk.chunk_length/2+int(self.noise(index+column/Chunk.chunk_length)*Chunk.chunk_length)
+                limit = int(Chunk.chunk_length/2)+int(self.noise(index+column/Chunk.chunk_length)*Chunk.chunk_length)
                 if line == limit:
                     tipo = 1
                 elif line > limit:
