@@ -178,7 +178,7 @@ class Chunk:
             super().__init__(*args, **kwargs)
 
     platform_dimensions = [80, 80]
-    chunk_length = 10
+    chunk_length = 15
     dimensions = (platform_dimensions[0] * chunk_length, platform_dimensions[1] * chunk_length)
 
     def __init__(self, loc, index, blocks=None):

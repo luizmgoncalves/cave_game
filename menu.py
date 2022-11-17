@@ -1,6 +1,7 @@
 import pygame
 import json
 import consulta_ao_banco
+import os
 
 pygame.font.init()
 
@@ -68,6 +69,12 @@ class Menu:
         self.curr_state = ''
 
         self.writing_label = Label("test", 600, 400, bg_color = (0, 0, 0, 100))
+
+        if "worlds.json" not in os.listdir():
+            with open("worlds.json", 'w') as worlds:
+                worlds.write("{}")
+
+
         with open("worlds.json", 'r') as worlds:
             self.worlds: dict =  eval(str(json.load(worlds)))
 

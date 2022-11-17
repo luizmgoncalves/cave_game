@@ -104,6 +104,9 @@ class ConsultorDB:
 
 
 def generate_db(name: str):
+    if "db" not in os.listdir():
+        os.system("mkdir db")
+
     database = sqlite3.connect(f'db/{name}.db')
     cursor = database.cursor()
     cursor.execute("""
